@@ -2,7 +2,7 @@
 // Change this to your Railway backend URL when deployed
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:8080/api'
-  : 'https://task-manager-production-5d96.up.railway.app/api';  // ← replace after deployment
+  : 'https://task-manager-production-fcb8.up.railway.app/api';  // ← replace after deployment
 
 // ─── AUTH STATE ───────────────────────────────────────────────────────────────
 const Auth = {
