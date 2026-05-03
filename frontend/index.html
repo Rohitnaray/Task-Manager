@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TaskFlow — Team Task Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="api.js"></script>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c28;
+    --border: #2a2a3d;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --green: #00d68f;
+    --yellow: #ffaa00;
+    --red: #ff4757;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --radius: 12px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  /* animated bg orbs */
+  body::before, body::after {
+    content: '';
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.15;
+    pointer-events: none;
+  }
+  body::before {
+    width: 500px; height: 500px;
+    background: var(--accent);
+    top: -100px; left: -100px;
+    animation: drift 8s ease-in-out infinite alternate;
+  }
+  body::after {
+    width: 400px; height: 400px;
+    background: var(--accent2);
+    bottom: -100px; right: -100px;
+    animation: drift 10s ease-in-out infinite alternate-reverse;
+  }
+  @keyframes drift { to { transform: translate(40px, 40px); } }
+
+  .auth-wrap {
+    width: 420px;
+    animation: fadeUp .5s ease;
+  }
+  @keyframes fadeUp {
+    from { opacity:0; transform: translateY(20px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 8px;
+    letter-spacing: -1px;
+  }
+  .logo span { color: var(--accent); }
+  .tagline { text-align:center; color:var(--muted); margin-bottom:32px; font-size:.9rem; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px;
+  }
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 4px;
+    margin-bottom: 28px;
+  }
+  .tab {
+    flex:1; padding:8px; border:none; background:none;
+    color:var(--muted); font-family:'DM Sans',sans-serif; font-size:.9rem;
+    border-radius:6px; cursor:pointer; transition: all .2s;
+  }
+  .tab.active { background:var(--accent); color:#fff; font-weight:500; }
+
+  .form-group { margin-bottom: 18px; }
+  label { display:block; font-size:.82rem; color:var(--muted); margin-bottom:6px; font-weight:500; letter-spacing:.5px; text-transform:uppercase; }
+  input, select {
+    width:100%; padding:12px 14px;
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius: var(--radius); color:var(--text);
+    font-family:'DM Sans',sans-serif; font-size:.95rem;
+    transition: border-color .2s;
+    outline: none;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  select option { background: var(--surface2); }
+
+  .btn {
+    width:100%; padding:14px;
+    background: var(--accent);
+    border:none; border-radius:var(--radius);
+    color:#fff; font-family:'Syne',sans-serif;
+    font-size:1rem; font-weight:700; letter-spacing:.5px;
+    cursor:pointer; transition: all .2s;
+    position: relative; overflow: hidden;
+  }
+  .btn:hover { background: #7c75ff; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(108,99,255,.35); }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+
+  .error {
+    background: rgba(255,71,87,.1);
+    border: 1px solid rgba(255,71,87,.3);
+    color: var(--red);
+    padding:10px 14px; border-radius:8px;
+    margin-bottom:16px; font-size:.88rem;
+  }
+  .success {
+    background: rgba(0,214,143,.1);
+    border: 1px solid rgba(0,214,143,.3);
+    color: var(--green);
+    padding:10px 14px; border-radius:8px;
+    margin-bottom:16px; font-size:.88rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="auth-wrap">
+  <div class="logo">Task<span>Flow</span></div>
+  <p class="tagline">Manage teams. Track progress. Ship faster.</p>
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('login')">Sign In</button>
+      <button class="tab" onclick="showTab('signup')">Sign Up</button>
+    </div>
+
+    <div id="msg"></div>
+
+    <!-- LOGIN -->
+    <div id="login-form">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="you@example.com" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" />
+      </div>
+      <button class="btn" onclick="doLogin()">Sign In →</button>
+    </div>
+
+    <!-- SIGNUP -->
+    <div id="signup-form" style="display:none">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="signup-name" placeholder="Jane Doe" />
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="signup-email" placeholder="you@example.com" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="signup-password" placeholder="min 6 characters" />
+      </div>
+      <div class="form-group">
+        <label>Role</label>
+        <select id="signup-role">
+          <option value="MEMBER">Member</option>
+          <option value="ADMIN">Admin</option>
+        </select>
+      </div>
+      <button class="btn" onclick="doSignup()">Create Account →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Redirect if already logged in
+  if (Auth.isLoggedIn()) window.location.href = 'dashboard.html';
+
+  function showTab(t) {
+    document.querySelectorAll('.tab').forEach((el,i) => el.classList.toggle('active', (i===0&&t==='login')||(i===1&&t==='signup')));
+    document.getElementById('login-form').style.display  = t === 'login'  ? '' : 'none';
+    document.getElementById('signup-form').style.display = t === 'signup' ? '' : 'none';
+    document.getElementById('msg').innerHTML = '';
+  }
+
+  function showMsg(html, type='error') {
+    document.getElementById('msg').innerHTML = `<div class="${type}">${html}</div>`;
+  }
+
+  async function doLogin() {
+    const email    = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    if (!email || !password) return showMsg('Please fill in all fields');
+    try {
+      const res = await API.login({ email, password });
+      Auth.setAuth(res.token, { id:res.id, name:res.name, email:res.email, role:res.role });
+      window.location.href = 'dashboard.html';
+    } catch(e) { showMsg(e.message); }
+  }
+
+  async function doSignup() {
+    const name     = document.getElementById('signup-name').value.trim();
+    const email    = document.getElementById('signup-email').value.trim();
+    const password = document.getElementById('signup-password').value;
+    const role     = document.getElementById('signup-role').value;
+    if (!name || !email || !password) return showMsg('Please fill in all fields');
+    try {
+      const res = await API.signup({ name, email, password, role });
+      Auth.setAuth(res.token, { id:res.id, name:res.name, email:res.email, role:res.role });
+      window.location.href = 'dashboard.html';
+    } catch(e) { showMsg(e.message); }
+  }
+
+  // Enter key support
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    if (document.getElementById('login-form').style.display !== 'none') doLogin();
+    else doSignup();
+  });
+</script>
+</body>
+</html>
